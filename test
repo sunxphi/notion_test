@@ -1,0 +1,222 @@
+<!DOCTYPE html><html><head><base href="https://websim.ai/mgw-hawaii-destinations/"><title>My Guy Worldwide - Hawaiian Islands Explorer</title>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, #87CEEB, #4169E1);
+    height: 100%;
+    overflow: hidden;
+  }
+  #hawaii-explorer {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  #header {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    text-align: center;
+  }
+  #main-content {
+    display: flex;
+    height: calc(100% - 80px);
+  }
+  #map-container {
+    flex: 2;
+    position: relative;
+  }
+  #info-panel {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    overflow-y: auto;
+  }
+  #weather-widget {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+  }
+  .island-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #4CAF50;
+    border: 2px solid white;
+    text-align: center;
+    line-height: 30px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .attraction-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #FFA500;
+    border: 2px solid white;
+  }
+  #info-panel h2 {
+    color: #333;
+    border-bottom: 2px solid #4CAF50;
+    padding-bottom: 10px;
+  }
+  #info-panel ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  #info-panel li {
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  #info-panel li:hover {
+    color: #4CAF50;
+  }
+</style>
+</head>
+<body>
+  <div id="hawaii-explorer">
+    <div id="header">
+      <h1>My Guy Worldwide - Hawaiian Islands Explorer</h1>
+    </div>
+    <div id="main-content">
+      <div id="map-container">
+        <div id="map" style="width: 100%; height: 100%;">
+  <div style="position: absolute; top: 10px; left: 10px; z-index: 1000; background-color: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px;">
+    <h3 style="margin: 0 0 10px 0;">MGW Interactive Map</h3>
+    <p style="margin: 0 0 5px 0;">🔍 Zoom in/out for detail</p>
+    <p style="margin: 0 0 5px 0;">🖱️ Click &amp; drag to explore</p>
+    <p style="margin: 0 0 5px 0;">📍 Click markers for info</p>
+  </div>
+  <svg width="100%" height="100%" viewBox="0 0 800 600" style="position: absolute; top: 0; left: 0;">
+    <defs>
+      <pattern id="water" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M0 5 Q2.5 0, 5 5 T10 5" fill="none" stroke="#4169E1" stroke-width="1"></path>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#water)"></rect>
+    <g id="oahu" transform="translate(300, 200)">
+      <path d="M0,0 Q20,-15 40,0 T80,0 Q100,15 80,30 T40,30 Q20,45 0,30 T-40,30 Q-60,15 -40,0 T0,0" fill="#4CAF50"></path>
+      <circle cx="0" cy="0" r="5" fill="#FFA500"></circle>
+      <text x="0" y="50" text-anchor="middle" fill="#333">Oahu</text>
+    </g>
+    <g id="maui" transform="translate(500, 300)">
+      <path d="M0,0 Q15,-10 30,0 T60,0 Q75,10 60,20 T30,20 Q15,30 0,20 T-30,20 Q-45,10 -30,0 T0,0" fill="#4CAF50"></path>
+      <circle cx="0" cy="0" r="5" fill="#FFA500"></circle>
+      <text x="0" y="40" text-anchor="middle" fill="#333">Maui</text>
+    </g>
+    <g id="big-island" transform="translate(600, 400)">
+      <path d="M0,0 Q30,-20 60,0 T120,0 Q150,20 120,40 T60,40 Q30,60 0,40 T-60,40 Q-90,20 -60,0 T0,0" fill="#4CAF50"></path>
+      <circle cx="0" cy="0" r="5" fill="#FFA500"></circle>
+      <text x="0" y="70" text-anchor="middle" fill="#333">Big Island</text>
+    </g>
+    <g id="kauai" transform="translate(200, 150)">
+      <path d="M0,0 Q10,-7 20,0 T40,0 Q50,7 40,14 T20,14 Q10,21 0,14 T-20,14 Q-30,7 -20,0 T0,0" fill="#4CAF50"></path>
+      <circle cx="0" cy="0" r="5" fill="#FFA500"></circle>
+      <text x="0" y="30" text-anchor="middle" fill="#333">Kauai</text>
+    </g>
+  </svg>
+  <div style="position: absolute; bottom: 10px; left: 10px; z-index: 1000; background-color: rgba(255, 255, 255, 0.8); padding: 10px; border-radius: 5px;">
+    <h4 style="margin: 0 0 5px 0;">MGW's Commitment</h4>
+    <p style="margin: 0;">Guiding you through authentic Hawaiian experiences</p>
+  </div>
+</div>
+        <div id="weather-widget"></div>
+      </div>
+      <div id="info-panel">
+        <h2>Island Information</h2>
+        <div id="island-info"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const islands = [
+  { name: "Oahu", lat: 21.4389, lng: -158.0001, attractions: ["Waikiki Beach", "Pearl Harbor", "North Shore"] },
+  { name: "Maui", lat: 20.7984, lng: -156.3319, attractions: ["Haleakala National Park", "Road to Hana", "Lahaina"] },
+  { name: "Big Island", lat: 19.5429, lng: -155.6659, attractions: ["Volcanoes National Park", "Mauna Kea", "Punalu'u Black Sand Beach"] },
+  { name: "Kauai", lat: 22.0964, lng: -159.5261, attractions: ["Na Pali Coast", "Waimea Canyon", "Hanalei Bay"] }
+];
+
+let map = L.map('map').setView([21.3069, -157.8583], 7);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+islands.forEach(island => {
+  let marker = L.marker([island.lat, island.lng], {
+    icon: L.divIcon({
+      className: 'island-icon',
+      html: island.name[0]
+    })
+  }).addTo(map);
+
+  marker.on('click', () => showIslandInfo(island));
+});
+
+function showIslandInfo(island) {
+  const infoPanel = document.getElementById('island-info');
+  infoPanel.innerHTML = `
+    <h3>${island.name}</h3>
+    <p>Top Attractions:</p>
+    <ul>
+      ${island.attractions.map(attraction => `<li onclick="showAttractionOnMap('${island.name}', '${attraction}')">${attraction}</li>`).join('')}
+    </ul>
+  `;
+  map.setView([island.lat, island.lng], 9);
+  getWeather(island.lat, island.lng, island.name);
+}
+
+function showAttractionOnMap(islandName, attractionName) {
+  const island = islands.find(i => i.name === islandName);
+  if (island) {
+    const lat = island.lat + (Math.random() - 0.5) * 0.1;
+    const lng = island.lng + (Math.random() - 0.5) * 0.1;
+    
+    L.marker([lat, lng], {
+      icon: L.divIcon({
+        className: 'attraction-marker',
+        html: ''
+      })
+    }).addTo(map).bindPopup(attractionName).openPopup();
+    
+    map.setView([lat, lng], 11);
+  }
+}
+
+async function getWeather(lat, lon, location) {
+  const apiKey = '89ac05589c6a8a4d755fc7b9e9a6f510'; // Replace with your actual API key
+  try {
+    const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=imperial`);
+    const weatherData = response.data;
+    updateWeatherWidget(weatherData, location);
+  } catch (error) {
+    console.error("Error fetching weather data:", error);
+  }
+}
+
+function updateWeatherWidget(data, location) {
+  const weatherWidget = document.getElementById('weather-widget');
+  weatherWidget.innerHTML = `
+    <h3>Weather in ${location}</h3>
+    <p>Temperature: ${Math.round(data.main.temp)}°F</p>
+    <p>Condition: ${data.weather[0].main}</p>
+    <p>Humidity: ${data.main.humidity}%</p>
+  `;
+}
+
+// Initialize with Oahu
+showIslandInfo(islands[0]);
+</script>
+</body></html>
